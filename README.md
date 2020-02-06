@@ -18,6 +18,14 @@ Contributions are very welcome. If you know how to make this code better, don't 
 python main.py --env-name "Reacher-v1"
 ```
 
+If you want to run flow environment, for example **grid0** environment, run:
+
+```bash
+python main.py --library=flow --flow-params-module=flow.benchmarks.grid0
+```
+
+``--flow-params-module`` needs to point to the module where ``flow_params`` attribute exists.
+
 ## Recommended hyper parameters
 
 InvertedPendulum-v1: 5000
