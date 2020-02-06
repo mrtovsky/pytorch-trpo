@@ -1,16 +1,21 @@
 import argparse
+
+from importlib import import_module
 from itertools import count
 
 import gym
 import scipy.optimize
-
 import torch
+
+from flow.utils.registry import make_create_env
+from torch.autograd import Variable
+
 from models import *
 from replay_memory import Memory
 from running_state import ZFilter
-from torch.autograd import Variable
 from trpo import trpo_step
 from utils import *
+
 
 torch.utils.backcompat.broadcast_warning.enabled = True
 torch.utils.backcompat.keepdim_warning.enabled = True
@@ -20,8 +25,12 @@ torch.set_default_tensor_type('torch.DoubleTensor')
 parser = argparse.ArgumentParser(description='PyTorch actor-critic example')
 parser.add_argument('--gamma', type=float, default=0.995, metavar='G',
                     help='discount factor (default: 0.995)')
-parser.add_argument('--env-name', default="Reacher-v1", metavar='G',
+parser.add_argument('--library', type=str, default='gym',
+                    choices=['gym', 'flow'])
+parser.add_argument('--gym-name', default='Reacher-v1', metavar='G',
                     help='name of the environment to run')
+parser.add_argument('--flow-params-module',
+                    type=lambda module: import_module(module))
 parser.add_argument('--tau', type=float, default=0.97, metavar='G',
                     help='gae (default: 0.97)')
 parser.add_argument('--l2-reg', type=float, default=1e-3, metavar='G',
@@ -40,7 +49,14 @@ parser.add_argument('--log-interval', type=int, default=1, metavar='N',
                     help='interval between training status logs (default: 10)')
 args = parser.parse_args()
 
-env = gym.make(args.env_name)
+if args.library == 'gym':
+    env = gym.make(args.gym_name)
+elif args.library == 'flow':
+    flow_params = getattr(args.flow_params_module, 'flow_params')
+    create_env, env_name = make_create_env(flow_params)
+    env = create_env()
+else:
+    pass
 
 num_inputs = env.observation_space.shape[0]
 num_actions = env.action_space.shape[0]
